@@ -59,6 +59,27 @@ def has_package(*check_packages):
     return (set(check_packages) <= all_packages)
 
 
+def setup_apt_cacher_ng(apt_cacher_ng_url):
+    proxy_config_file = "/etc/apt/apt.conf.d/90proxy"
+    proxy_url = apt_cacher_ng_url.rstrip("/")
+
+    if proxy_url in read(proxy_config_file):
+        print "Apt proxy already configured"
+        return
+    
+    try:
+        import urllib
+        data = urllib.urlopen(apt_cacher_ng_url).read()
+    except:
+        print "Could not acquire apt proxy settings"
+        return
+
+    if "APT Reconfiguration required" in data:  # Looks like a valid apt-cacher-ng page
+        write(proxy_config_file, """Acquire::http { Proxy "%s"; };""" % proxy_url)
+        print "Apt proxy activated"
+    else:
+        print "Not a proper apt proxy"
+
 #######
 ## File damagement
 #######
@@ -80,6 +101,11 @@ def write(filename, content):
     with file(filename, "wb") as out_f:
         out_f.write(textwrap.dedent(content.strip("\n\r")))
 
+def read(filename):
+    if os.path.isfile(filename):
+        with file(filename, "rb") as in_f:
+            return in_f.read()
+    return ""
 
 #######
 ## Services

@@ -11,17 +11,17 @@ os.putenv("DEBIAN_FRONTEND", "noninteractive")
 
 
 def get_output(cmd, **kwargs):
+    check = kwargs.pop("check", True)
     kwargs["stdout"] = PIPE
     p = Popen(cmd, **kwargs)
     stdout, stderr = p.communicate()
-    if p.returncode:
+    if check and p.returncode:
         raise ValueError("%r return code %s" % (cmd, p.returncode))
     return stdout
 
 
 def sh(cmd):
     check_call(cmd, shell=True)
-
 
 def shh(cmd):
     get_output(cmd, shell=True)
